@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Keyboard from "./Keyboard";
@@ -55,6 +55,8 @@ const Wordle: React.FC = () => {
 
   const onKeyPress = useCallback(
     async (key: string) => {
+      if (isConfigOpen) return;
+
       if (gameOver) return;
 
       if (key === "ENTER") {
@@ -107,10 +109,10 @@ const Wordle: React.FC = () => {
   );
 
   //handle keyboard input
-  //TODO: avoid hit enter at config toast
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (isConfigOpen || event.ctrlKey || event.metaKey || event.altKey)
+        return;
 
       if (event.key === "Enter") {
         onKeyPress("ENTER");

@@ -1,0 +1,23 @@
+export const WORDS = [
+    "APPLE", "BRICK", "CHAIR", "DANCE", "EAGLE",
+    "FLAME", "GRAPE", "HOUSE", "IVORY", "JOLLY",
+    "KNIFE", "LEMON", "MANGO", "NIGHT", "OCEAN",
+    "PLANT", "QUILT", "RIVER", "STONE", "TRAIN",
+    "UNITY", "VIVID", "WHEAT", "XENON", "YACHT",
+    "ZEBRA", "ADAPT", "BEACH", "CANDY", "DOUGH",
+    "EVERY", "FROST", "GLOVE", "HEART", "INDEX",
+    "JUMPY", "KIOSK", "LASER", "MIRTH", "NOVEL",
+    "OLIVE", "PEARL", "QUARK", "READY", "SHEEP",
+    "TIGER", "URBAN", "VOCAL", "WHALE", "YEARN",
+    "ZESTY", "BAKER", "CRANE", "DAISY", "EAGER",
+    "FABLE", "GAMER", "HONEY", "IRONY", "JEWEL",
+    "KNACK", "LATCH", "MARCH", "NERDY", "OPINE",
+    "PIANO", "QUEST", "RELIC", "SANDY", "TANGO",
+    "UPSET", "VIGOR", "WISER", "XYLEM", "YOUTH",
+    "ZESTY", "AMBER", "BLOOM", "CIDER", "DROVE",
+    "EMBER", "FROST", "GLOOM", "HASTE", "IMAGE",
+    "JOLLY", "KNOLL", "LEAFY", "MADLY", "NERVE",
+    "OASIS", "PLUMB", "QUILT", "RALLY", "SWOON",
+    "TWEAK", "UMBRA", "VOGUE", "WHISK", "XENON",
+    "YIELD", "ZIPPY"
+];

@@ -33,11 +33,11 @@ const GameBoard: React.FC<GameBoardProps> = ({
                 className={`w-14 h-14 border-2 flex items-center justify-center text-2xl font-bold mr-2
                   ${
                     state === "hit"
-                      ? "bg-green-500 text-white border-green-500"
+                      ? "bg-[var(--color-hit)] border-[var(--color-hit)] text-white "
                       : state === "present"
-                      ? "bg-yellow-500 text-white border-yellow-500"
+                      ? "bg-[var(--color-present)] text-white border-[var(--color-present)]"
                       : state === "miss"
-                      ? "bg-gray-500 text-white border-gray-500"
+                      ? "bg-[var(--color-miss)] text-white border-[var(--color-miss)]"
                       : "bg-white text-black border-gray-300"
                   }`}
               >

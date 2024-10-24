@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { WORDS } from '@/app/data/words'
 
-const WORDS = ['REACT']
 const WORD_LENGTH = 5
 
 //TODO: ADD ANSWER CHAR
@@ -67,29 +67,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid guess length' }, { status: 400 })
     }
 
-    let result: string[] = []
-    const answerChars = game.answer.split('')
-    const guessChars = guess.split("");
-
-    //identify hits and mark spots to aviod double counting
-    guessChars.forEach((letter: string, i: number) => {
-        if (letter === answerChars[i]) {
-            result[i] = 'hit';
-            answerChars[i] = '';
-        } else {
-            result[i] = 'miss';
-        }
-    });
-
-    //identify presents
-    guessChars.forEach((letter: string, i: number) => {
-        if (result[i] !== 'hit' && answerChars.includes(letter)) {
-            result[i] = 'present';
-            const index = answerChars.indexOf(letter);
-            answerChars[index] = '';
-        }
-    });
-
+    const result = processGuess(game, guess);
     game.guesses.push(guess)
     game.gameOver = game.guesses.length >= game.maxGuesses || guess === game.answer
     game.won = guess === game.answer
@@ -104,4 +82,31 @@ export async function POST(request: NextRequest) {
     games.set(gameId, game)
 
     return NextResponse.json(response)
+}
+
+function processGuess(game: GameState, guess: string): string[] {
+    const result: string[] = [];
+    const answerChars = game.answer.split('');
+    const guessChars = guess.split('');
+
+    // Identify hits and mark spots to avoid double counting
+    guessChars.forEach((letter: string, i: number) => {
+        if (letter === answerChars[i]) {
+            result[i] = 'hit';
+            answerChars[i] = ''; // Mark as used
+        } else {
+            result[i] = 'miss';
+        }
+    });
+
+    // Identify presents
+    guessChars.forEach((letter: string, i: number) => {
+        if (result[i] !== 'hit' && answerChars.includes(letter)) {
+            result[i] = 'present';
+            const index = answerChars.indexOf(letter);
+            answerChars[index] = ''; // Mark as used
+        }
+    });
+
+    return result;
 }
