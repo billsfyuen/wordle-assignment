@@ -23,7 +23,7 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => onClose(maxGuesses)}>
+    <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Game Configuration</DialogTitle>
@@ -36,7 +36,7 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
               type="number"
               value={maxGuesses}
               onChange={(e) => setMaxGuesses(Number(e.target.value))}
-              min={1}
+              min={3}
               max={10}
             />
           </div>

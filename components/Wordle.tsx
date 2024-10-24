@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Keyboard from "./Keyboard";
@@ -9,7 +9,6 @@ import ConfigPopup from "./ConfigPopup";
 
 // TODO: separte into a separate file
 const WORDS = ["BILLY"];
-
 const WORD_LENGTH = 5;
 
 type GuessState = ("hit" | "present" | "miss" | "empty")[];
@@ -29,39 +28,69 @@ const Wordle: React.FC = () => {
     setAnswer(WORDS[Math.floor(Math.random() * WORDS.length)]);
   }, []);
 
-  const onKeyPress = (key: string) => {
-    if (gameOver) return;
+  const onKeyPress = useCallback(
+    (key: string) => {
+      if (gameOver) return;
 
-    if (key === "ENTER") {
-      if (currentGuess.length !== WORD_LENGTH) {
-        toast({
-          title: "Invalid word length",
-          description: `Your guess must be ${WORD_LENGTH} letters long.`,
-          variant: "destructive",
-        });
-        return;
+      if (key === "ENTER") {
+        //check if the guess contains 5 letters
+        if (currentGuess.length !== WORD_LENGTH) {
+          toast({
+            title: "Invalid word length",
+            description: `Your guess must be ${WORD_LENGTH} letters long.`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const newGuesses = [...guesses];
+        newGuesses[guessIndex] = currentGuess;
+        setGuesses(newGuesses);
+        setGuessIndex(guessIndex + 1);
+
+        if (currentGuess === answer) {
+          setWon(true);
+          setGameOver(true);
+        } else if (guessIndex === maxGuesses - 1) {
+          //running out of max guesses
+          setGameOver(true);
+        }
+
+        setCurrentGuess("");
+      } else if (key === "BACKSPACE") {
+        setCurrentGuess(currentGuess.slice(0, -1));
+      } else if (currentGuess.length < WORD_LENGTH && /^[a-zA-Z]$/.test(key)) {
+        setCurrentGuess(currentGuess + key);
       }
+    },
+    [currentGuess, gameOver, guessIndex, guesses, maxGuesses, answer, toast]
+  );
 
-      const newGuesses = [...guesses];
-      newGuesses[guessIndex] = currentGuess;
-      setGuesses(newGuesses);
-      setGuessIndex(guessIndex + 1);
+  //handle keyboard input
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
 
-      if (currentGuess === answer) {
-        setWon(true);
-        setGameOver(true);
-      } else if (guessIndex === maxGuesses - 1) {
-        setGameOver(true);
+      if (event.key === "Enter") {
+        onKeyPress("ENTER");
+      } else if (event.key === "Backspace") {
+        onKeyPress("BACKSPACE");
+      } else {
+        const key = event.key.toUpperCase();
+        if (/^[A-Z]$/.test(key)) {
+          onKeyPress(key);
+        }
       }
+    };
 
-      setCurrentGuess("");
-    } else if (key === "BACKSPACE") {
-      setCurrentGuess(currentGuess.slice(0, -1));
-    } else if (currentGuess.length < WORD_LENGTH) {
-      setCurrentGuess(currentGuess + key);
-    }
-  };
+    window.addEventListener("keydown", handleKeyDown);
 
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onKeyPress]);
+
+  //check if each letter is a hit, present or miss
   const getGuessState = (guess: string): GuessState => {
     const state: GuessState = Array(WORD_LENGTH).fill("miss");
     const answerChars = answer.split("");
@@ -78,6 +107,7 @@ const Wordle: React.FC = () => {
     guess.split("").forEach((letter, i) => {
       if (state[i] !== "hit" && answerChars.includes(letter)) {
         state[i] = "present";
+        //remove to avoid double counting
         answerChars[answerChars.indexOf(letter)] = "";
       }
     });
@@ -101,10 +131,6 @@ const Wordle: React.FC = () => {
     setGuesses(Array(newMaxGuesses).fill(""));
   };
 
-  if (isConfigOpen) {
-    return <ConfigPopup isOpen={isConfigOpen} onClose={handleConfigClose} />;
-  }
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <h1 className="text-4xl font-bold mb-8">Wordle</h1>
@@ -113,6 +139,7 @@ const Wordle: React.FC = () => {
         currentGuess={currentGuess}
         guessIndex={guessIndex}
         getGuessState={getGuessState}
+        maxGuesses={maxGuesses}
       />
       <Keyboard onKeyPress={onKeyPress} />
       {gameOver && (
@@ -125,6 +152,7 @@ const Wordle: React.FC = () => {
           <Button onClick={resetGame}>Play Again</Button>
         </div>
       )}
+      <ConfigPopup isOpen={isConfigOpen} onClose={handleConfigClose} />
     </div>
   );
 };

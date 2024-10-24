@@ -9,6 +9,7 @@ interface GameBoardProps {
   currentGuess: string;
   guessIndex: number;
   getGuessState: (guess: string) => GuessState;
+  maxGuesses: number;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -16,14 +17,17 @@ const GameBoard: React.FC<GameBoardProps> = ({
   currentGuess,
   guessIndex,
   getGuessState,
+  maxGuesses,
 }) => {
   return (
     <div className="mb-8">
-      {guesses.map((guess, i) => (
+      {Array.from({ length: maxGuesses }).map((guess, i) => (
         <div key={i} className="flex mb-2">
           {Array.from({ length: WORD_LENGTH }).map((_, j) => {
-            const letter = i === guessIndex ? currentGuess[j] : guess[j];
-            const state = i < guessIndex ? getGuessState(guess)[j] : "empty";
+            //fill the letter and state into the cell
+            const letter = i === guessIndex ? currentGuess[j] : guesses[i]?.[j];
+            const state =
+              i < guessIndex ? getGuessState(guesses[i])[j] : "empty";
             return (
               <div
                 key={j}
