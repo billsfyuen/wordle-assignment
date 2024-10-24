@@ -2,7 +2,7 @@ import React from "react";
 
 const WORD_LENGTH = 5;
 
-// type GuessState = ("hit" | "present" | "miss" | "empty")[];
+type GuessState = ("hit" | "present" | "miss" | "empty")[];
 
 interface GameBoardProps {
   guesses: string[];
