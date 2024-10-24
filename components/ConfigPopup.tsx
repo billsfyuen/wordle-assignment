@@ -23,7 +23,7 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Game Configuration</DialogTitle>
