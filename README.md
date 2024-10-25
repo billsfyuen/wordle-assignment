@@ -1,4 +1,4 @@
-### Wordle Clone
+# Wordle Clone
 
 This is a Wordle clone project made by Bill YUEN for a job interview.
 
@@ -12,3 +12,5 @@ First, run the development server:
 npm install
 npm run dev
 ```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the project.
