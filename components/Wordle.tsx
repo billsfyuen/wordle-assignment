@@ -23,12 +23,16 @@ const Wordle: React.FC = () => {
   const [answer, setAnswer] = useState<string | null>(null);
   const [isConfigOpen, setIsConfigOpen] = useState(true);
   const [maxGuesses, setMaxGuesses] = useState(6);
+  const [gameMode, setGameMode] = useState("normal");
 
   const startNewGame = useCallback(async () => {
     try {
-      const response = await fetch(`/api/cheat_mode?maxGuesses=${maxGuesses}`, {
-        method: "GET",
-      });
+      const response = await fetch(
+        `/api/wordle/${gameMode}?maxGuesses=${maxGuesses}`,
+        {
+          method: "GET",
+        }
+      );
       const data = await response.json();
 
       setGameId(data.gameId);
@@ -45,7 +49,7 @@ const Wordle: React.FC = () => {
         variant: "destructive",
       });
     }
-  }, [toast, maxGuesses]);
+  }, [toast, maxGuesses, gameMode]);
 
   useEffect(() => {
     if (!isConfigOpen) {
@@ -55,9 +59,7 @@ const Wordle: React.FC = () => {
 
   const onKeyPress = useCallback(
     async (key: string) => {
-      if (isConfigOpen) return;
-
-      if (gameOver) return;
+      if (isConfigOpen || gameOver || !gameId) return;
 
       if (key === "ENTER") {
         //check if the guess contains 5 letters
@@ -71,7 +73,7 @@ const Wordle: React.FC = () => {
         }
 
         try {
-          const response = await fetch("/api/cheat_mode", {
+          const response = await fetch(`/api/wordle/${gameMode}`, {
             method: "POST",
             body: JSON.stringify({ gameId, guess: currentGuess }),
             headers: { "Content-Type": "application/json" },
@@ -81,9 +83,7 @@ const Wordle: React.FC = () => {
           if (response.ok) {
             setGuesses([...guesses, currentGuess]);
             setGuessStates([...guessStates, data.result]);
-
             setCurrentGuess("");
-
             setGameOver(data.gameOver);
             setWon(data.won);
             if (data.gameOver) {
@@ -105,7 +105,18 @@ const Wordle: React.FC = () => {
         setCurrentGuess(currentGuess + key);
       }
     },
-    [currentGuess, gameOver, guesses, maxGuesses, answer, toast]
+    [
+      isConfigOpen,
+      gameId,
+      gameMode,
+      currentGuess,
+      gameOver,
+      guesses,
+      guessStates,
+      maxGuesses,
+      answer,
+      toast,
+    ]
   );
 
   //handle keyboard input
@@ -133,8 +144,9 @@ const Wordle: React.FC = () => {
     };
   }, [onKeyPress]);
 
-  const handleConfigClose = (newMaxGuesses: number) => {
+  const handleConfigClose = (newMaxGuesses: number, newGameMode: string) => {
     setMaxGuesses(newMaxGuesses);
+    setGameMode(newGameMode);
     setIsConfigOpen(false);
   };
 

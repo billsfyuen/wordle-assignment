@@ -8,18 +8,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ConfigPopupProps {
   isOpen: boolean;
-  onClose: (maxGuesses: number) => void;
+  onClose: (maxGuesses: number, gameMode: string) => void;
 }
 
 const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
   const [maxGuesses, setMaxGuesses] = React.useState(6);
+  const [gameMode, setGameMode] = React.useState("normal");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onClose(maxGuesses);
+    onClose(maxGuesses, gameMode);
   };
 
   return (
@@ -39,6 +47,18 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
               min={3}
               max={10}
             />
+          </div>
+          <div>
+            <Label htmlFor="gameMode">Game Mode</Label>
+            <Select value={gameMode} onValueChange={setGameMode}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a game mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="hostCheat">Host Cheat</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Button type="submit">Start Game</Button>
         </form>
