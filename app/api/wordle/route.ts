@@ -3,7 +3,6 @@ import { WORDS } from '@/app/data/words'
 
 const WORD_LENGTH = 5
 
-//TODO: ADD ANSWER CHAR
 type GameState = {
     answer: string;
     guesses: string[];
@@ -69,8 +68,8 @@ export async function POST(request: NextRequest) {
 
     const result = processGuess(game, guess);
     game.guesses.push(guess)
-    game.gameOver = game.guesses.length >= game.maxGuesses || guess === game.answer
     game.won = guess === game.answer
+    game.gameOver = game.guesses.length >= game.maxGuesses || game.won
 
     const response = {
         result,
@@ -84,6 +83,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response)
 }
 
+/**
+ * Helper functions
+ */
 function processGuess(game: GameState, guess: string): string[] {
     const result: string[] = [];
     const answerChars = game.answer.split('');

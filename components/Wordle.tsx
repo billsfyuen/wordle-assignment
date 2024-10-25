@@ -26,7 +26,7 @@ const Wordle: React.FC = () => {
 
   const startNewGame = useCallback(async () => {
     try {
-      const response = await fetch(`/api/wordle?maxGuesses=${maxGuesses}`, {
+      const response = await fetch(`/api/cheat_mode?maxGuesses=${maxGuesses}`, {
         method: "GET",
       });
       const data = await response.json();
@@ -71,7 +71,7 @@ const Wordle: React.FC = () => {
         }
 
         try {
-          const response = await fetch("/api/wordle", {
+          const response = await fetch("/api/cheat_mode", {
             method: "POST",
             body: JSON.stringify({ gameId, guess: currentGuess }),
             headers: { "Content-Type": "application/json" },
