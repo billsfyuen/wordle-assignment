@@ -24,6 +24,9 @@ const Wordle: React.FC = () => {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
   const [maxGuesses, setMaxGuesses] = useState(6);
   const [gameMode, setGameMode] = useState("normal");
+  const [keyStates, setKeyStates] = useState<
+    Record<string, GuessState[number]>
+  >({});
 
   const startNewGame = useCallback(async () => {
     try {
@@ -54,6 +57,7 @@ const Wordle: React.FC = () => {
   useEffect(() => {
     if (!isConfigOpen) {
       startNewGame();
+      setKeyStates({});
     }
   }, [isConfigOpen, startNewGame]);
 
@@ -89,6 +93,20 @@ const Wordle: React.FC = () => {
             if (data.gameOver) {
               setAnswer(data.answer);
             }
+
+            const newKeyStates = { ...keyStates };
+            currentGuess.split("").forEach((letter, index) => {
+              const state = data.result[index];
+              if (
+                state === "hit" ||
+                (state === "present" && newKeyStates[letter] !== "hit")
+              ) {
+                newKeyStates[letter] = state;
+              } else if (state === "miss" && !newKeyStates[letter]) {
+                newKeyStates[letter] = "miss";
+              }
+            });
+            setKeyStates(newKeyStates);
           } else {
             throw new Error(data.error);
           }
@@ -115,6 +133,7 @@ const Wordle: React.FC = () => {
       guessStates,
       maxGuesses,
       answer,
+      keyStates,
       toast,
     ]
   );
@@ -165,7 +184,7 @@ const Wordle: React.FC = () => {
         guessStates={guessStates}
         maxGuesses={maxGuesses}
       />
-      <Keyboard onKeyPress={onKeyPress} />
+      <Keyboard onKeyPress={onKeyPress} keyStates={keyStates} />
       {gameOver && (
         <div className="mt-8 text-center">
           <p className="text-2xl font-bold mb-4">
