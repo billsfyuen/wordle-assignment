@@ -75,7 +75,6 @@ export async function GET(request: NextRequest) {
  *   @property {string} answer - The correct answer if the game is over.
  */
 export async function POST(request: NextRequest) {
-
     const { gameId, guess } = await request.json();
     const game = games.get(gameId);
 
@@ -217,20 +216,33 @@ function updateCandidates(game: GameState, guess: string) {
 }
 
 function getTiedCandidates(candidates: AnswerCandidate[]): AnswerCandidate[] {
-    const tiedCandidates = candidates.filter(candidate => candidate.needCheckTied && candidate.score > 0);
-
-    if (tiedCandidates.length === 1) {
-        return [tiedCandidates[0]];
-    }
+    const tiedCandidates = candidates.filter(candidate => candidate.needCheckTied);
 
     if (tiedCandidates.length === 0) {
         return [];
     }
 
-    // Check for tie candidates
+    // if only one candidate, return it to process like normal wordle
+    if (tiedCandidates.length === 1) {
+        return [tiedCandidates[0]];
+    }
+
+    // If there are exactly two candidates and both have scores > 0, compare directly
+    if (tiedCandidates.length === 2 && (tiedCandidates[0].score > 0 || tiedCandidates[1].score > 0)) {
+        const [first, second] = tiedCandidates;
+        if (first.score < second.score) {
+            return [first];
+        } else if (second.score < first.score) {
+            return [second];
+        } else {
+            return first.hit < second.hit ? [first] : [second];
+        }
+    }
+
+    // Check for tie candidates for more than 2 candidates
     // Find the minimun hit and present values for canditates with score > 0
-    const minHit = Math.min(...tiedCandidates.map(candidate => candidate.hit));
-    const minPresent = Math.min(...tiedCandidates.map(candidate => candidate.present));
+    const minHit = Math.min(...tiedCandidates.filter(candidate => candidate.score > 0).map(candidate => candidate.hit));
+    const minPresent = Math.min(...tiedCandidates.filter(candidate => candidate.score > 0).map(candidate => candidate.present));
 
     return tiedCandidates.filter(candidate =>
         candidate.hit === minHit &&
