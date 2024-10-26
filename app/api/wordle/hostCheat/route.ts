@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     const tiedCandidates = getTiedCandidates(game.candidates);
 
-    if (tiedCandidates.length > 1) {
+    if (tiedCandidates.length > 0) {
         // play like normal wordle, use the first candidate's answer as final
         // no more score update
         result = processGuess(game, guess);
@@ -197,6 +197,7 @@ function updateCandidates(game: GameState, guess: string) {
             candidate.present = presentCount;
             candidate.score = hitCount + presentCount;
 
+            // if needUpdate is false, meaning the candidate is 'eliminated' in the next round
             if (candidate.score > 0) {
                 candidate.needUpdate = false;
                 candidate.needCheckTied = true;
@@ -216,19 +217,22 @@ function updateCandidates(game: GameState, guess: string) {
 }
 
 function getTiedCandidates(candidates: AnswerCandidate[]): AnswerCandidate[] {
+    const tiedCandidates = candidates.filter(candidate => candidate.needCheckTied && candidate.score > 0);
+
+    if (tiedCandidates.length === 1) {
+        return [tiedCandidates[0]];
+    }
+
+    if (tiedCandidates.length === 0) {
+        return [];
+    }
+
     // Check for tie candidates
     // Find the minimun hit and present values for canditates with score > 0
-    const minHit = Math.min(...candidates
-        .filter(candidate => candidate.needCheckTied && candidate.score > 0)
-        .map(candidate => candidate.hit));
+    const minHit = Math.min(...tiedCandidates.map(candidate => candidate.hit));
+    const minPresent = Math.min(...tiedCandidates.map(candidate => candidate.present));
 
-    const minPresent = Math.min(...candidates
-        .filter(candidate => candidate.needCheckTied && candidate.score > 0)
-        .map(candidate => candidate.present));
-
-    return candidates.filter(candidate =>
-        candidate.needCheckTied &&
-        candidate.score > 0 &&
+    return tiedCandidates.filter(candidate =>
         candidate.hit === minHit &&
         candidate.present === minPresent
     );
