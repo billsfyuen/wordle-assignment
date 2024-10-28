@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Keyboard from "./Keyboard";
 import GameBoard from "./GameBoard";
+import { checkWordExists } from "@/utils/checkWordExists";
 
 const WORD_LENGTH = 5;
 
@@ -22,10 +23,14 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
   const { toast } = useToast();
 
   const [gameId, setGameId] = useState<string | null>(null);
-  const [guesses1, setGuesses1] = useState<string[]>([]);
-  const [guesses2, setGuesses2] = useState<string[]>([]);
-  const [guessStates1, setGuessStates1] = useState<GuessState[]>([]);
-  const [guessStates2, setGuessStates2] = useState<GuessState[]>([]);
+  const [playerAGuesses, setplayerAGuesses] = useState<string[]>([]);
+  const [playerBGuesses, setplayerBGuesses] = useState<string[]>([]);
+  const [playerAGuessesStates, setplayerAGuessesStates] = useState<
+    GuessState[]
+  >([]);
+  const [playerBGuessesStates, setplayerBGuessesStates] = useState<
+    GuessState[]
+  >([]);
   const [currentGuess, setCurrentGuess] = useState("");
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState<number | null>(null);
@@ -46,10 +51,10 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
       const data = await response.json();
 
       setGameId(data.gameId);
-      setGuesses1([]);
-      setGuesses2([]);
-      setGuessStates1([]);
-      setGuessStates2([]);
+      setplayerAGuesses([]);
+      setplayerBGuesses([]);
+      setplayerAGuessesStates([]);
+      setplayerBGuessesStates([]);
       setCurrentGuess("");
       setGameOver(false);
       setWinner(null);
@@ -84,6 +89,15 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
           return;
         }
 
+        if (!(await checkWordExists(currentGuess))) {
+          toast({
+            title: "Invalid word",
+            description: `Your guess must be an English word.`,
+            variant: "destructive",
+          });
+          return;
+        }
+
         try {
           const response = await fetch(`/api/multiPlayer`, {
             method: "POST",
@@ -99,19 +113,19 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
           if (response.ok) {
             const newGuesses =
               currentPlayer === 0
-                ? [...guesses1, currentGuess]
-                : [...guesses2, currentGuess];
+                ? [...playerAGuesses, currentGuess]
+                : [...playerBGuesses, currentGuess];
             const newGuessStates =
               currentPlayer === 0
-                ? [...guessStates1, data.result]
-                : [...guessStates2, data.result];
+                ? [...playerAGuessesStates, data.result]
+                : [...playerBGuessesStates, data.result];
 
             if (currentPlayer === 0) {
-              setGuesses1(newGuesses);
-              setGuessStates1(newGuessStates);
+              setplayerAGuesses(newGuesses);
+              setplayerAGuessesStates(newGuessStates);
             } else {
-              setGuesses2(newGuesses);
-              setGuessStates2(newGuessStates);
+              setplayerBGuesses(newGuesses);
+              setplayerBGuessesStates(newGuessStates);
             }
 
             setCurrentGuess("");
@@ -157,10 +171,10 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
       gameId,
       currentGuess,
       gameOver,
-      guesses1,
-      guesses2,
-      guessStates1,
-      guessStates2,
+      playerAGuesses,
+      playerBGuesses,
+      playerAGuessesStates,
+      playerBGuessesStates,
       maxGuesses,
       keyStates,
       toast,
@@ -197,31 +211,40 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
         <div>
           <h2 className="text-2xl font-bold mb-4">Player 1</h2>
           <GameBoard
-            guesses={guesses1}
+            guesses={playerAGuesses}
             currentGuess={currentPlayer === 0 ? currentGuess : ""}
-            guessIndex={guesses1.length}
-            guessStates={guessStates1}
+            guessIndex={playerAGuesses.length}
+            guessStates={playerAGuessesStates}
             maxGuesses={maxGuesses}
+            isMultiplayer={true}
+            gameOver={gameOver}
           />
         </div>
         <div>
           <h2 className="text-2xl font-bold mb-4">Player 2</h2>
           <GameBoard
-            guesses={guesses2}
+            guesses={playerBGuesses}
             currentGuess={currentPlayer === 1 ? currentGuess : ""}
-            guessIndex={guesses2.length}
-            guessStates={guessStates2}
+            guessIndex={playerBGuesses.length}
+            guessStates={playerBGuessesStates}
             maxGuesses={maxGuesses}
+            isMultiplayer={true}
+            gameOver={gameOver}
           />
         </div>
       </div>
-      <Keyboard onKeyPress={onKeyPress} keyStates={keyStates} />
+      <Keyboard
+        onKeyPress={onKeyPress}
+        keyStates={keyStates}
+        isMultiplayer={true}
+        gameOver={gameOver}
+      />
       {gameOver && (
         <div className="mt-8 text-center">
           <p className="text-2xl font-bold mb-4">
-            {winner
+            {winner !== null
               ? `Player ${winner + 1} wins! The word was ${answer}.`
-              : `Game Over. The word was ${answer}.`}
+              : `Tied! The word was ${answer}.`}
           </p>
           <Button onClick={onGameEnd}>Back to Main Menu</Button>
         </div>

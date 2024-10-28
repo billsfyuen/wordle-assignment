@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Keyboard from "./Keyboard";
 import GameBoard from "./GameBoard";
+import { checkWordExists } from "@/utils/checkWordExists";
 
 const WORD_LENGTH = 5;
 
@@ -75,6 +76,15 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
           toast({
             title: "Invalid word length",
             description: `Your guess must be ${WORD_LENGTH} letters long.`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (!(await checkWordExists(currentGuess))) {
+          toast({
+            title: "Invalid word",
+            description: `Your guess must be an English word.`,
             variant: "destructive",
           });
           return;
@@ -172,8 +182,15 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
         guessIndex={guesses.length}
         guessStates={guessStates}
         maxGuesses={maxGuesses}
+        isMultiplayer={false}
+        gameOver={gameOver}
       />
-      <Keyboard onKeyPress={onKeyPress} keyStates={keyStates} />
+      <Keyboard
+        onKeyPress={onKeyPress}
+        keyStates={keyStates}
+        isMultiplayer={false}
+        gameOver={gameOver}
+      />
       {gameOver && (
         <div className="mt-8 text-center">
           <p className="text-2xl font-bold mb-4">

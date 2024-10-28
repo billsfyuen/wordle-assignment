@@ -12,19 +12,32 @@ type GuessState = "hit" | "present" | "miss" | "empty";
 interface KeyboardProps {
   onKeyPress: (key: string) => void;
   keyStates: Record<string, GuessState>;
+  isMultiplayer: boolean;
+  gameOver: boolean;
 }
 
-const Keyboard: React.FC<KeyboardProps> = ({ onKeyPress, keyStates }) => {
+const Keyboard: React.FC<KeyboardProps> = ({
+  onKeyPress,
+  keyStates,
+  isMultiplayer,
+  gameOver,
+}) => {
   const getKeyColor = (key: string) => {
-    switch (keyStates[key]) {
-      case "hit":
-        return "bg-[var(--color-hit)] text-white border-[var(--color-hit)]";
-      case "present":
-        return "bg-[var(--color-present)] text-white border-[var(--color-present)]";
-      case "miss":
-        return "bg-[var(--color-miss)] text-white border-[var(--color-miss)]";
-      default:
-        return "";
+    if (isMultiplayer && !gameOver) {
+      //in multiplayer mode, keyboard not showing color state during game
+      //only reveal color state after game over
+      return "";
+    } else {
+      switch (keyStates[key]) {
+        case "hit":
+          return "bg-[var(--color-hit)] text-white border-[var(--color-hit)]";
+        case "present":
+          return "bg-[var(--color-present)] text-white border-[var(--color-present)]";
+        case "miss":
+          return "bg-[var(--color-miss)] text-white border-[var(--color-miss)]";
+        default:
+          return "";
+      }
     }
   };
 

@@ -10,6 +10,8 @@ interface GameBoardProps {
   guessIndex: number;
   guessStates: GuessState[];
   maxGuesses: number;
+  isMultiplayer: boolean;
+  gameOver: boolean;
 }
 
 const GameBoard: React.FC<GameBoardProps> = ({
@@ -18,6 +20,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
   guessIndex,
   guessStates,
   maxGuesses,
+  isMultiplayer,
+  gameOver,
 }) => {
   return (
     <div className="mb-8">
@@ -27,6 +31,8 @@ const GameBoard: React.FC<GameBoardProps> = ({
             //fill the letter and state into the cell
             const letter = i === guessIndex ? currentGuess[j] : guesses[i]?.[j];
             const state = guessStates[i]?.[j] || "empty";
+            //if multiplayer mode, hide the letter until game over
+            const hiddenLetter = letter ? "*" : "";
             return (
               <div
                 key={j}
@@ -41,7 +47,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
                       : "bg-white text-black border-gray-300"
                   }`}
               >
-                {letter}
+                {isMultiplayer && !gameOver ? hiddenLetter : letter}
               </div>
             );
           })}

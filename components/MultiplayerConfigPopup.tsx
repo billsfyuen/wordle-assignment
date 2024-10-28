@@ -12,7 +12,10 @@ interface MultiplayerConfigPopupProps {
   onClose: () => void;
 }
 
-const MultiplayerConfigPopup: React.FC<MultiplayerConfigPopupProps> = ({ isOpen, onClose }) => {
+const MultiplayerConfigPopup: React.FC<MultiplayerConfigPopupProps> = ({
+  isOpen,
+  onClose,
+}) => {
   return (
     <Dialog open={isOpen}>
       <DialogContent>
@@ -25,7 +28,14 @@ const MultiplayerConfigPopup: React.FC<MultiplayerConfigPopupProps> = ({ isOpen,
             <li>Two players will take turns guessing the same word.</li>
             <li>Each player has their own game board.</li>
             <li>Players share the same keyboard for input.</li>
-            <li>The game ends when one player guesses the word correctly or both players run out of guesses.</li>
+            <li>
+              Players cannot see their typed guesses during the game and must
+              memorize them.
+            </li>
+            <li>
+              The game ends when one player guesses the word correctly or both
+              players run out of guesses.
+            </li>
             <li>The player who guesses the word with fewer attempts wins.</li>
             <li>In case of a tie, the game ends in a draw.</li>
           </ul>
