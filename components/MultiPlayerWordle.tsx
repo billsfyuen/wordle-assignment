@@ -98,11 +98,11 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
 
           if (response.ok) {
             const newGuesses =
-              currentPlayer === 1
+              currentPlayer === 0
                 ? [...guesses1, currentGuess]
                 : [...guesses2, currentGuess];
             const newGuessStates =
-              currentPlayer === 1
+              currentPlayer === 0
                 ? [...guessStates1, data.result]
                 : [...guessStates2, data.result];
 
