@@ -7,6 +7,7 @@ type GameState = {
     answer: string;
     guesses: string[];
     maxGuesses: number;
+    isHardMode: boolean;
     gameOver: boolean;
     won: boolean;
 }
@@ -22,6 +23,7 @@ const games: Map<string, GameState> = new Map()
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const maxGuesses = parseInt(searchParams.get('maxGuesses') || '6', 10)
+    const isHardMode = searchParams.get('isHardMode') === 'true'
 
     const gameId = Math.random().toString(36).substring(7)
     const answer = WORDS[Math.floor(Math.random() * WORDS.length)]
@@ -30,6 +32,7 @@ export async function GET(request: NextRequest) {
         answer,
         maxGuesses,
         guesses: [],
+        isHardMode,
         gameOver: false,
         won: false
     }
@@ -64,6 +67,13 @@ export async function POST(request: NextRequest) {
 
     if (guess.length !== WORD_LENGTH) {
         return NextResponse.json({ error: 'Invalid guess length' }, { status: 400 })
+    }
+
+    if (game.isHardMode && game.guesses.length > 0) {
+        const lastGuessState = processGuess(game, game.guesses[game.guesses.length - 1]);
+        if (!isValidHardModeGuess(guess, game.guesses[game.guesses.length - 1], lastGuessState)) {
+            return NextResponse.json({ error: 'Invalid guess for hard mode' }, { status: 400 })
+        }
     }
 
     const result = processGuess(game, guess);
@@ -111,4 +121,23 @@ function processGuess(game: GameState, guess: string): string[] {
     });
 
     return result;
+}
+
+function isValidHardModeGuess(guess: string, lastGuess: string, lastGuessState: string[]): boolean {
+    for (let i = 0; i < WORD_LENGTH; i++) {
+        if (lastGuessState[i] === 'hit' && guess[i] !== lastGuess[i]) {
+            return false;
+        }
+    }
+
+    const presentLetters = lastGuess
+        .split('')
+        .filter((_, i) => lastGuessState[i] === 'present');
+    for (const letter of presentLetters) {
+        if (!guess.includes(letter)) {
+            return false;
+        }
+    }
+
+    return true;
 }

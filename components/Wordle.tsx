@@ -10,17 +10,20 @@ const Wordle: React.FC = () => {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
   const [isMultiplayerConfigOpen, setIsMultiplayerConfigOpen] = useState(false);
   const [maxGuesses, setMaxGuesses] = useState(6);
-  const [gameMode, setGameMode] = useState("normal");
+  const [gameVersion, setGameVersion] = useState("normal");
   const [isMultiplayer, setIsMultiplayer] = useState(false);
+  const [isHardMode, setIsHardMode] = useState(false);
 
   const handleConfigClose = (
     newMaxGuesses: number,
-    newGameMode: string,
-    newIsMultiplayer: boolean
+    newGameVersion: string,
+    newIsMultiplayer: boolean,
+    newIsHardMode: boolean
   ) => {
     setMaxGuesses(newMaxGuesses);
-    setGameMode(newGameMode);
+    setGameVersion(newGameVersion);
     setIsMultiplayer(newIsMultiplayer);
+    setIsHardMode(newIsHardMode);
     setIsConfigOpen(false);
 
     if (newIsMultiplayer) {
@@ -48,12 +51,14 @@ const Wordle: React.FC = () => {
         (isMultiplayer ? (
           <MultiPlayerWordle
             maxGuesses={maxGuesses}
+            isHardMode={isHardMode}
             onGameEnd={handleGameEnd}
           />
         ) : (
           <SinglePlayerWordle
             maxGuesses={maxGuesses}
-            gameMode={gameMode}
+            gameVersion={gameVersion}
+            isHardMode={isHardMode}
             onGameEnd={handleGameEnd}
           />
         ))}

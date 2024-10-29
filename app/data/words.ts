@@ -1,3 +1,5 @@
+//REMIND USERS TO CHECK ALL NEWLY ADDED WORDS IF PASS THE DICTIONARY API
+
 export const WORDS = [
     "APPLE", "BRAVE", "CANDY", "DREAM", "EAGER",
     "FLOOD", "GRACE", "HAPPY", "IMAGE", "JUMPY",
@@ -20,4 +22,8 @@ export const WORDS = [
     "NUTTY", "OFFER", "PAUSE", "QUILT", "RACER"
 ];
 
+// word list for testing example 2
 // export const WORDS = ["WORLD", "QUITE", "FANCY", "FRESH", "PANIC", "CRAZY", "BUGGY", "HELLO", "SCARE"]
+
+// // word list for testing example 1
+// export const WORDS = ["WORLD", "QUITE", "FANCY", "FRESH", "PANIC", "CRAZY", "BUGGY", "HELLO"]

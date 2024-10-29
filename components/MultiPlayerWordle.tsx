@@ -13,11 +13,13 @@ type GuessState = ("hit" | "present" | "miss" | "empty")[];
 
 interface MultiPlayerWordleProps {
   maxGuesses: number;
+  isHardMode: boolean;
   onGameEnd: () => void;
 }
 
 const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
   maxGuesses,
+  isHardMode,
   onGameEnd,
 }) => {
   const { toast } = useToast();
@@ -43,7 +45,7 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
   const startNewGame = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/multiPlayer?maxGuesses=${maxGuesses}`,
+        `/api/multiPlayer?maxGuesses=${maxGuesses}&isHardMode=${isHardMode}`,
         {
           method: "GET",
         }
@@ -62,7 +64,7 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
         variant: "destructive",
       });
     }
-  }, [toast, maxGuesses]);
+  }, [toast, maxGuesses, isHardMode]);
 
   const resetGame = (gameId: string) => {
     setGameId(gameId);
@@ -118,6 +120,11 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
       });
       return;
     }
+
+    if (!isValidHardModeGuess(currentGuess)) {
+      return;
+    }
+
     try {
       const response = await fetch(`/api/multiPlayer`, {
         method: "POST",
@@ -175,6 +182,52 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
       setplayerBGuesses(newGuesses);
       setplayerBGuessesStates(newGuessStates);
     }
+  };
+
+  const isValidHardModeGuess = (guess: string): boolean => {
+    if (!isHardMode) {
+      return true;
+    }
+
+    const currentPlayerGuesses =
+      currentPlayer === 0 ? playerAGuesses : playerBGuesses;
+    const currentPlayerGuessStates =
+      currentPlayer === 0 ? playerAGuessesStates : playerBGuessesStates;
+
+    if (currentPlayerGuesses.length === 0) {
+      return true;
+    }
+
+    const lastGuess = currentPlayerGuesses[currentPlayerGuesses.length - 1];
+    const lastGuessState =
+      currentPlayerGuessStates[currentPlayerGuessStates.length - 1];
+
+    for (let i = 0; i < WORD_LENGTH; i++) {
+      if (lastGuessState[i] === "hit" && guess[i] !== lastGuess[i]) {
+        toast({
+          title: "Invalid guess (HARD mode)",
+          description: `Letter * must be in position ${i + 1}.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    const presentLetters = lastGuess
+      .split("")
+      .filter((_, i) => lastGuessState[i] === "present");
+    for (const letter of presentLetters) {
+      if (!guess.includes(letter)) {
+        toast({
+          title: "Invalid guess (HARD mode)",
+          description: `Guess must include the letter *.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    return true;
   };
 
   /**** (Keyboard) Input Handling *****/

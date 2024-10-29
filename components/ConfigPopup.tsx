@@ -15,24 +15,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface ConfigPopupProps {
   isOpen: boolean;
   onClose: (
     maxGuesses: number,
-    gameMode: string,
-    isMultiplayer: boolean
+    gameVersion: string,
+    isMultiplayer: boolean,
+    isHardMode: boolean
   ) => void;
 }
 
 const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
   const [maxGuesses, setMaxGuesses] = React.useState(6);
-  const [gameMode, setGameMode] = React.useState("normal");
+  const [gameVersion, setGameVersion] = React.useState("normal");
   const [isMultiplayer, setIsMultiplayer] = React.useState(false);
+  const [isHardMode, setIsHardMode] = React.useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onClose(maxGuesses, gameMode, isMultiplayer);
+    onClose(maxGuesses, gameVersion, isMultiplayer, isHardMode);
   };
 
   return (
@@ -54,11 +57,11 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
             />
           </div>
           <div>
-            <Label htmlFor="gameMode">Game Mode</Label>
+            <Label htmlFor="gameVersion">Game Version</Label>
             <Select
-              value={gameMode}
+              value={gameVersion}
               onValueChange={(value) => {
-                setGameMode(value);
+                setGameVersion(value);
                 if (value === "hostCheat") {
                   setIsMultiplayer(false);
                 }
@@ -84,7 +87,7 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
               onValueChange={(value) => {
                 setIsMultiplayer(value === "true");
                 if (value === "true") {
-                  setGameMode("normal");
+                  setGameVersion("normal");
                 }
               }}
             >
@@ -97,6 +100,17 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
               </SelectContent>
             </Select>
           </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="hard-mode"
+              checked={isHardMode}
+              onCheckedChange={setIsHardMode}
+            />
+            <Label htmlFor="hard-mode">Hard Mode</Label>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            In Hard Mode, any revealed hints must be used in subsequent guesses.
+          </p>
           <Button type="submit">Start Game</Button>
         </form>
       </DialogContent>

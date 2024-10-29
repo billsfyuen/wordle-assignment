@@ -13,13 +13,15 @@ type GuessState = ("hit" | "present" | "miss" | "empty")[];
 
 interface SinglePlayerWordleProps {
   maxGuesses: number;
-  gameMode: string;
+  gameVersion: string;
+  isHardMode: boolean;
   onGameEnd: () => void;
 }
 
 const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
   maxGuesses,
-  gameMode,
+  gameVersion,
+  isHardMode,
   onGameEnd,
 }) => {
   const { toast } = useToast();
@@ -38,7 +40,7 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
   const startNewGame = useCallback(async () => {
     try {
       const response = await fetch(
-        `/api/singlePlayer/${gameMode}?maxGuesses=${maxGuesses}`,
+        `/api/singlePlayer/${gameVersion}?maxGuesses=${maxGuesses}&isHardMode=${isHardMode}`,
         {
           method: "GET",
         }
@@ -57,7 +59,7 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
         variant: "destructive",
       });
     }
-  }, [toast, maxGuesses, gameMode]);
+  }, [toast, maxGuesses, gameVersion, isHardMode]);
 
   const resetGame = (gameId: string) => {
     setGameId(gameId);
@@ -114,8 +116,13 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
       return;
     }
 
+    //for hard mode, check if previous hints are used
+    if (!isValidHardModeGuess(currentGuess)) {
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/singlePlayer/${gameMode}`, {
+      const response = await fetch(`/api/singlePlayer/${gameVersion}`, {
         method: "POST",
         body: JSON.stringify({ gameId, guess: currentGuess }),
         headers: { "Content-Type": "application/json" },
@@ -144,6 +151,44 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
         variant: "destructive",
       });
     }
+  };
+
+  const isValidHardModeGuess = (guess: string): boolean => {
+    if (!isHardMode || guesses.length === 0) {
+      return true;
+    }
+
+    const lastGuessState = guessStates[guessStates.length - 1];
+    const lastGuess = guesses[guesses.length - 1];
+
+    for (let i = 0; i < WORD_LENGTH; i++) {
+      if (lastGuessState[i] === "hit" && guess[i] !== lastGuess[i]) {
+        toast({
+          title: "Invalid guess (HARD mode)",
+          description: `Letter ${lastGuess[
+            i
+          ].toUpperCase()} must be in position ${i + 1}.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    const presentLetters = lastGuess
+      .split("")
+      .filter((_, i) => lastGuessState[i] === "present");
+    for (const letter of presentLetters) {
+      if (!guess.includes(letter)) {
+        toast({
+          title: "Invalid guess (HARD mode)",
+          description: `Guess must include the letter ${letter.toUpperCase()}.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    return true;
   };
 
   /**** (Keyboard) Input Handling *****/
