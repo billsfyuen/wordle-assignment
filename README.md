@@ -41,3 +41,11 @@ This application follows a Server/Client model. The server handles input validat
    > **Note:** Multi-Player Mode can be played in Hard Mode, but is not available in Host-Cheat Mode.
 5. **Infinite Mode:** This mode continues indefinitely until the user guesses the correct word. A scoring system is implemented: +3 points for Hits, +1 point for Presents, and -1 point for misses. Aim to achieve the highest score!
    > **Note:** Hard Mode is compatible with Infinite Mode, and it is recommended to play Infinite Mode with Hard Mode enabled.
+
+## Enhancements / Features to be Added
+
+1. **Multilingual / Educational Mode:** Enable users to play in multiple languages with corresponding word lists, and provide definitions or context for each word after gameplay.
+2. **Blind Mode for Single Player / "Hit-Only" or "Present-Only" Hint Mode:** A challenging mode that limits hints to either hits or presents.
+3. **Letter-Flipping Animation:** Reference to the OG Wordle for enhancing visual appeal.
+4. **Score Board**
+5. **Multi Player Room** Utilize Socket.IO to enhance the multiplayer experience by adding features like time-attack challenges, allowing players to compete directly against each other with real-time interactions.
