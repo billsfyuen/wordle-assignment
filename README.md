@@ -6,7 +6,19 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-To get started, first install the dependencies:
+To get started, first clone the project from GitHub:
+
+```bash
+git clone git@github.com:billsfyuen/wordle-assignment.git
+```
+
+Navigate into the project directory:
+
+```bash
+cd wordle-assignment
+```
+
+Install the dependencies:
 
 ```bash
 npm install
