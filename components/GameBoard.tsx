@@ -54,7 +54,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   return (
-    <div className="mb-8">
+    <div className="mb-8 mx-4">
       {Array.from({ length: maxGuesses }).map((_, i) => {
         const isCurrentGuess = i === guessIndex;
         return (

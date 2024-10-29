@@ -9,6 +9,7 @@ type GameState = {
     isHardMode: boolean;
     hitCount: number;
     presentCount: number;
+    missCount: number;
     score: number;
 }
 
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest) {
         isHardMode,
         hitCount: 0,
         presentCount: 0,
+        missCount: 0,
         score: 0,
     }
     games.set(gameId, newGame)
@@ -71,6 +73,7 @@ export async function POST(request: NextRequest) {
         isCorrect,
         hitCount: game.hitCount,
         presentCount: game.presentCount,
+        missCount: game.missCount,
         score: game.score
     })
 }
@@ -122,8 +125,12 @@ function isValidHardModeGuess(guess: string, lastGuess: string, lastGuessResult:
 function processScore(game: GameState, result: string[]) {
     const newHitCount = result.filter((r) => r === 'hit').length;
     const newPresentCount = result.filter((r) => r === 'present').length;
+    const newMissCount = result.filter((r) => r === "miss").length;
 
     game.hitCount += newHitCount;
     game.presentCount += newPresentCount;
-    game.score += newHitCount * 2 + newPresentCount;
+    game.missCount += newMissCount;
+
+    game.score += newHitCount * 3 + newPresentCount;
+    game.score -= newMissCount
 }

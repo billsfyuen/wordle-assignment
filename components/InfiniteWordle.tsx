@@ -17,6 +17,8 @@ interface InfiniteWordleProps {
   isHardMode: boolean;
 }
 
+//TODO: deduct points on misses
+// 3 points for hit, 1 point for present, -1 point for miss
 const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
   onGameEnd,
   isHardMode,
@@ -29,6 +31,7 @@ const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
   const [score, setScore] = useState(0);
   const [hitCount, setHitCount] = useState(0);
   const [presentCount, setPresentCount] = useState(0);
+  const [missCount, setMissCount] = useState(0);
   const [maxGuesses, setMaxGuesses] = useState(INITIAL_MAX_GUESSES);
   const [keyStates, setKeyStates] = useState<
     Record<string, GuessState[number]>
@@ -69,6 +72,7 @@ const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
     setScore(0);
     setHitCount(0);
     setPresentCount(0);
+    setMissCount(0);
     setMaxGuesses(INITIAL_MAX_GUESSES);
     setKeyStates({});
     setGameOver(false);
@@ -148,6 +152,7 @@ const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
         setScore(data.score);
         setHitCount(data.hitCount);
         setPresentCount(data.presentCount);
+        setMissCount(data.missCount);
 
         if (guesses.length + 1 >= maxGuesses) {
           setMaxGuesses(maxGuesses + 1);
@@ -214,7 +219,8 @@ const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
       <div className="text-2xl font-bold mb-4">Score: {score}</div>
       <div className="text-lg mb-4">
         <span className="mr-4">Hits: {hitCount}</span>
-        <span>Present: {presentCount}</span>
+        <span className="mr-4">Present: {presentCount}</span>
+        <span>Misses: {missCount}</span>
       </div>
       <div ref={gameBoardRef} className="max-h-[60vh] overflow-y-auto mb-4">
         <GameBoard
@@ -240,7 +246,7 @@ const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
       )}
       {isHardMode && (
         <p className="mt-2 text-sm text-muted-foreground">
-          Hard Mode: On - You must use revealed hints in subsequent guesses.
+          Hard Mode - You must use revealed hints in subsequent guesses.
         </p>
       )}
     </div>
