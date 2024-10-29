@@ -23,7 +23,6 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
   onGameEnd,
 }) => {
   const { toast } = useToast();
-
   const [gameId, setGameId] = useState<string | null>(null);
   const [guesses, setGuesses] = useState<string[]>([]);
   const [guessStates, setGuessStates] = useState<GuessState[]>([]);
@@ -35,6 +34,7 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
     Record<string, GuessState[number]>
   >({});
 
+  /**** Game Initialization *****/
   const startNewGame = useCallback(async () => {
     try {
       const response = await fetch(
@@ -45,15 +45,12 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
       );
       const data = await response.json();
 
-      setGameId(data.gameId);
-      setGuesses([]);
-      setGuessStates([]);
-      setCurrentGuess("");
-      setGameOver(false);
-      setWon(false);
-      setAnswer(null);
-      setKeyStates({});
-    } catch (error) {
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      resetGame(data.gameId);
+    } catch {
       toast({
         title: "Error",
         description: "Failed to start a new game. Please try again.",
@@ -62,94 +59,109 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
     }
   }, [toast, maxGuesses, gameMode]);
 
+  const resetGame = (gameId: string) => {
+    setGameId(gameId);
+    setGuesses([]);
+    setGuessStates([]);
+    setCurrentGuess("");
+    setGameOver(false);
+    setWon(false);
+    setAnswer(null);
+    setKeyStates({});
+  };
+
   useEffect(() => {
     startNewGame();
   }, [startNewGame]);
 
+  /**** Key State Management *****/
+  const updateKeyStates = (currentGuess: string, result: GuessState) => {
+    const newKeyStates = { ...keyStates };
+    currentGuess.split("").forEach((letter, index) => {
+      const state = result[index];
+      if (
+        state === "hit" ||
+        (state === "present" && newKeyStates[letter] !== "hit")
+      ) {
+        newKeyStates[letter] = state;
+      } else if (state === "miss" && !newKeyStates[letter]) {
+        newKeyStates[letter] = "miss";
+      }
+    });
+    setKeyStates(newKeyStates);
+  };
+
+  /**** Guess Submission *****/
+  const handleGuessSubmission = async () => {
+    //check if the guess contains 5 letters
+    if (currentGuess.length !== WORD_LENGTH) {
+      toast({
+        title: "Invalid word length",
+        description: `Your guess must be ${WORD_LENGTH} letters long.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    //check if the word exists
+    //using API
+    if (!(await checkWordExists(currentGuess))) {
+      toast({
+        title: "Invalid word",
+        description: `Your guess must be an English word.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/singlePlayer/${gameMode}`, {
+        method: "POST",
+        body: JSON.stringify({ gameId, guess: currentGuess }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      if (response.ok) {
+        setGuesses([...guesses, currentGuess]);
+        setGuessStates([...guessStates, data.result]);
+        setCurrentGuess("");
+        setGameOver(data.gameOver);
+        setWon(data.won);
+        if (data.gameOver) {
+          setAnswer(data.answer);
+        }
+        updateKeyStates(currentGuess, data.result);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit guess. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  /**** (Keyboard) Input Handling *****/
   const onKeyPress = useCallback(
     async (key: string) => {
       if (gameOver || !gameId) return;
 
       if (key === "ENTER") {
-        //check if the guess contains 5 letters
-        if (currentGuess.length !== WORD_LENGTH) {
-          toast({
-            title: "Invalid word length",
-            description: `Your guess must be ${WORD_LENGTH} letters long.`,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        if (!(await checkWordExists(currentGuess))) {
-          toast({
-            title: "Invalid word",
-            description: `Your guess must be an English word.`,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        try {
-          const response = await fetch(`/api/singlePlayer/${gameMode}`, {
-            method: "POST",
-            body: JSON.stringify({ gameId, guess: currentGuess }),
-            headers: { "Content-Type": "application/json" },
-          });
-          const data = await response.json();
-
-          if (response.ok) {
-            setGuesses([...guesses, currentGuess]);
-            setGuessStates([...guessStates, data.result]);
-            setCurrentGuess("");
-            setGameOver(data.gameOver);
-            setWon(data.won);
-            if (data.gameOver) {
-              setAnswer(data.answer);
-            }
-
-            const newKeyStates = { ...keyStates };
-            currentGuess.split("").forEach((letter, index) => {
-              const state = data.result[index];
-              if (
-                state === "hit" ||
-                (state === "present" && newKeyStates[letter] !== "hit")
-              ) {
-                newKeyStates[letter] = state;
-              } else if (state === "miss" && !newKeyStates[letter]) {
-                newKeyStates[letter] = "miss";
-              }
-            });
-            setKeyStates(newKeyStates);
-          } else {
-            throw new Error(data.error);
-          }
-        } catch (error) {
-          toast({
-            title: "Error",
-            description: "Failed to submit guess. Please try again.",
-            variant: "destructive",
-          });
-        }
+        await handleGuessSubmission();
       } else if (key === "BACKSPACE") {
         setCurrentGuess(currentGuess.slice(0, -1));
       } else if (currentGuess.length < WORD_LENGTH && /^[a-zA-Z]$/.test(key)) {
         setCurrentGuess(currentGuess + key);
       }
     },
-    [
-      gameId,
-      gameMode,
-      currentGuess,
-      gameOver,
-      guesses,
-      guessStates,
-      keyStates,
-      toast,
-    ]
+    [gameId, currentGuess, gameOver, handleGuessSubmission]
   );
 
-  //handle keyboard input
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey || event.altKey) return;

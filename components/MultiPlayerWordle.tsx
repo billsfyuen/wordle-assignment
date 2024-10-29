@@ -21,7 +21,6 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
   onGameEnd,
 }) => {
   const { toast } = useToast();
-
   const [gameId, setGameId] = useState<string | null>(null);
   const [playerAGuesses, setplayerAGuesses] = useState<string[]>([]);
   const [playerBGuesses, setplayerBGuesses] = useState<string[]>([]);
@@ -40,6 +39,7 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
     Record<string, GuessState[number]>
   >({});
 
+  /**** Game Initialization *****/
   const startNewGame = useCallback(async () => {
     try {
       const response = await fetch(
@@ -50,18 +50,12 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
       );
       const data = await response.json();
 
-      setGameId(data.gameId);
-      setplayerAGuesses([]);
-      setplayerBGuesses([]);
-      setplayerAGuessesStates([]);
-      setplayerBGuessesStates([]);
-      setCurrentGuess("");
-      setGameOver(false);
-      setWinner(null);
-      setAnswer(null);
-      setCurrentPlayer(0);
-      setKeyStates({});
-    } catch (error) {
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      resetGame(data.gameId);
+    } catch {
       toast({
         title: "Error",
         description: "Failed to start a new game. Please try again.",
@@ -70,115 +64,133 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
     }
   }, [toast, maxGuesses]);
 
+  const resetGame = (gameId: string) => {
+    setGameId(gameId);
+    setplayerAGuesses([]);
+    setplayerBGuesses([]);
+    setplayerAGuessesStates([]);
+    setplayerBGuessesStates([]);
+    setCurrentGuess("");
+    setGameOver(false);
+    setWinner(null);
+    setAnswer(null);
+    setCurrentPlayer(0);
+    setKeyStates({});
+  };
+
   useEffect(() => {
     startNewGame();
   }, [startNewGame]);
 
+  /**** Key State Management *****/
+  const updateKeyStates = (currentGuess: string, result: GuessState) => {
+    const newKeyStates = { ...keyStates };
+    currentGuess.split("").forEach((letter, index) => {
+      const state = result[index];
+      if (
+        state === "hit" ||
+        (state === "present" && newKeyStates[letter] !== "hit")
+      ) {
+        newKeyStates[letter] = state;
+      } else if (state === "miss" && !newKeyStates[letter]) {
+        newKeyStates[letter] = "miss";
+      }
+    });
+    setKeyStates(newKeyStates);
+  };
+
+  /**** Guess Submission *****/
+  const handleGuessSubmission = async () => {
+    if (currentGuess.length !== WORD_LENGTH) {
+      toast({
+        title: "Invalid word length",
+        description: `Your guess must be ${WORD_LENGTH} letters long.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!(await checkWordExists(currentGuess))) {
+      toast({
+        title: "Invalid word",
+        description: `Your guess must be an English word.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      const response = await fetch(`/api/multiPlayer`, {
+        method: "POST",
+        body: JSON.stringify({
+          gameId,
+          guess: currentGuess,
+          playerIndex: currentPlayer,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      if (response.ok) {
+        updatePlayerGuesses(data.result);
+        setCurrentGuess("");
+        setCurrentPlayer(data.nextPlayer);
+        setGameOver(data.gameOver);
+        setWinner(data.winner);
+
+        if (data.gameOver) {
+          setAnswer(data.answer);
+        }
+
+        updateKeyStates(currentGuess, data.result);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit guess. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updatePlayerGuesses = (result: GuessState) => {
+    const newGuesses =
+      currentPlayer === 0
+        ? [...playerAGuesses, currentGuess]
+        : [...playerBGuesses, currentGuess];
+    const newGuessStates =
+      currentPlayer === 0
+        ? [...playerAGuessesStates, result]
+        : [...playerBGuessesStates, result];
+
+    if (currentPlayer === 0) {
+      setplayerAGuesses(newGuesses);
+      setplayerAGuessesStates(newGuessStates);
+    } else {
+      setplayerBGuesses(newGuesses);
+      setplayerBGuessesStates(newGuessStates);
+    }
+  };
+
+  /**** (Keyboard) Input Handling *****/
   const onKeyPress = useCallback(
     async (key: string) => {
       if (gameOver || !gameId) return;
 
       if (key === "ENTER") {
-        //check if the guess contains 5 letters
-        if (currentGuess.length !== WORD_LENGTH) {
-          toast({
-            title: "Invalid word length",
-            description: `Your guess must be ${WORD_LENGTH} letters long.`,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        if (!(await checkWordExists(currentGuess))) {
-          toast({
-            title: "Invalid word",
-            description: `Your guess must be an English word.`,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        try {
-          const response = await fetch(`/api/multiPlayer`, {
-            method: "POST",
-            body: JSON.stringify({
-              gameId,
-              guess: currentGuess,
-              playerIndex: currentPlayer,
-            }),
-            headers: { "Content-Type": "application/json" },
-          });
-          const data = await response.json();
-
-          if (response.ok) {
-            const newGuesses =
-              currentPlayer === 0
-                ? [...playerAGuesses, currentGuess]
-                : [...playerBGuesses, currentGuess];
-            const newGuessStates =
-              currentPlayer === 0
-                ? [...playerAGuessesStates, data.result]
-                : [...playerBGuessesStates, data.result];
-
-            if (currentPlayer === 0) {
-              setplayerAGuesses(newGuesses);
-              setplayerAGuessesStates(newGuessStates);
-            } else {
-              setplayerBGuesses(newGuesses);
-              setplayerBGuessesStates(newGuessStates);
-            }
-
-            setCurrentGuess("");
-            setCurrentPlayer(data.nextPlayer);
-            setGameOver(data.gameOver);
-            setWinner(data.winner);
-
-            if (data.gameOver) {
-              setAnswer(data.answer);
-            }
-
-            const newKeyStates = { ...keyStates };
-            currentGuess.split("").forEach((letter, index) => {
-              const state = data.result[index];
-              if (
-                state === "hit" ||
-                (state === "present" && newKeyStates[letter] !== "hit")
-              ) {
-                newKeyStates[letter] = state;
-              } else if (state === "miss" && !newKeyStates[letter]) {
-                newKeyStates[letter] = "miss";
-              }
-            });
-            setKeyStates(newKeyStates);
-          } else {
-            throw new Error(data.error);
-          }
-        } catch (error) {
-          toast({
-            title: "Error",
-            description: "Failed to submit guess. Please try again.",
-            variant: "destructive",
-          });
-        }
+        await handleGuessSubmission();
       } else if (key === "BACKSPACE") {
         setCurrentGuess(currentGuess.slice(0, -1));
       } else if (currentGuess.length < WORD_LENGTH && /^[a-zA-Z]$/.test(key)) {
         setCurrentGuess(currentGuess + key);
       }
     },
-    [
-      currentPlayer,
-      gameId,
-      currentGuess,
-      gameOver,
-      playerAGuesses,
-      playerBGuesses,
-      playerAGuessesStates,
-      playerBGuessesStates,
-      maxGuesses,
-      keyStates,
-      toast,
-    ]
+    [gameId, currentGuess, gameOver, handleGuessSubmission]
   );
 
   useEffect(() => {
