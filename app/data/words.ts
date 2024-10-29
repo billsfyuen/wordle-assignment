@@ -22,9 +22,3 @@ export const WORDS = [
     "ICING", "JOKES", "KNEAD", "LUMEN", "MARCH",
     "NUTTY", "OFFER", "PAUSE", "QUILT", "RACER"
 ];
-
-// // word list for testing example 1
-// export const WORDS = ["WORLD", "QUITE", "FANCY", "FRESH", "PANIC", "CRAZY", "BUGGY", "HELLO"]
-
-// // word list for testing example 2
-// export const WORDS = ["WORLD", "QUITE", "FANCY", "FRESH", "PANIC", "CRAZY", "BUGGY", "HELLO", "SCARE"]
