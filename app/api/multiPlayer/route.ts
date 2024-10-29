@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         game.winner = playerIndex
     } else {
         // Check if both players have used all their guesses
-        const allGuessesUsed = game.players.every(player => player.guesses.length >= game.maxGuesses)
+        const allGuessesUsed = game.players.every(p => p.guesses.length >= game.maxGuesses)
         if (allGuessesUsed) {
             game.gameOver = true
         } else {

@@ -17,12 +17,12 @@ interface InfiniteWordleProps {
   isHardMode: boolean;
 }
 
-//TODO: deduct points on misses
 // 3 points for hit, 1 point for present, -1 point for miss
 const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
   onGameEnd,
   isHardMode,
 }) => {
+  const gameBoardRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const [gameId, setGameId] = useState<string | null>(null);
   const [guesses, setGuesses] = useState<string[]>([]);
@@ -38,8 +38,9 @@ const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
   >({});
   const [gameOver, setGameOver] = useState(false);
 
-  const gameBoardRef = useRef<HTMLDivElement>(null);
-
+  /**
+   * Game Initialization
+   */
   const startNewGame = useCallback(async () => {
     try {
       const response = await fetch(
@@ -88,6 +89,9 @@ const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
     }
   }, [gameBoardRef, guesses]);
 
+  /**
+   * Key State Management
+   */
   const updateKeyStates = (currentGuess: string, result: GuessState) => {
     const newKeyStates = { ...keyStates };
     currentGuess.split("").forEach((letter, index) => {
@@ -104,6 +108,9 @@ const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
     setKeyStates(newKeyStates);
   };
 
+  /**
+   * Guess Submission
+   */
   const handleGuessSubmission = async () => {
     if (currentGuess.length !== WORD_LENGTH) {
       toast({
@@ -123,12 +130,17 @@ const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
       return;
     }
 
+    // check if guess are duplicate (only in infinte mode)
     if (guesses.includes(currentGuess)) {
       toast({
         title: "Duplicate guess",
         description: "You've already guessed this word.",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (!isValidHardModeGuess(currentGuess)) {
       return;
     }
 
@@ -175,6 +187,50 @@ const InfiniteWordle: React.FC<InfiniteWordleProps> = ({
     }
   };
 
+  /**
+   * Validate Hard Mode Guess
+   */
+  const isValidHardModeGuess = (guess: string): boolean => {
+    if (!isHardMode || guesses.length === 0) {
+      return true;
+    }
+
+    const lastGuessState = guessStates[guessStates.length - 1];
+    const lastGuess = guesses[guesses.length - 1];
+
+    for (let i = 0; i < WORD_LENGTH; i++) {
+      if (lastGuessState[i] === "hit" && guess[i] !== lastGuess[i]) {
+        toast({
+          title: "Invalid guess (HARD mode)",
+          description: `Letter ${lastGuess[
+            i
+          ].toUpperCase()} must be in position ${i + 1}.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    const presentLetters = lastGuess
+      .split("")
+      .filter((_, i) => lastGuessState[i] === "present");
+    for (const letter of presentLetters) {
+      if (!guess.includes(letter)) {
+        toast({
+          title: "Invalid guess (HARD mode)",
+          description: `Guess must include the letter ${letter.toUpperCase()}.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  /**
+   * (Keyboard) Input Handling
+   */
   const onKeyPress = useCallback(
     async (key: string) => {
       if (!gameId || gameOver) return;

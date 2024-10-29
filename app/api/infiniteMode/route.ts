@@ -15,6 +15,13 @@ type GameState = {
 
 const games: Map<string, GameState> = new Map()
 
+/**
+ * GET /api/infiniteMode
+ * Returns the game id of the newly created game.
+ * 
+ * @param {boolean} optional isHardMode - Indicates if the game is in hard mode.
+ * @returns {gameId: string} 
+ */
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const isHardMode = searchParams.get('isHardMode') === 'true'
@@ -35,6 +42,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ gameId })
 }
 
+/**
+ * POST /api/singlePlayer/hostCheat
+ * Updates the games data map and returns the result of the guess.
+ * If game over or won, it includes the correct answer.
+ * 
+ * @param {string} gameId
+ * @param {string} guess
+ * @returns {Object}
+ *   @property {Array<string>} result - "hit" | "present" | "miss"
+ *   @property {boolean} isCorrect - Indicates if the guess is correct.
+ *   @property {number} hitCount - The number of correct letters in the correct position.
+ *   @property {number} presentCount - The number of correct letters in the wrong position.
+ *   @property {number} missCount - The number of incorrect letters.
+ *   @property {number} score - The current score.
+ */
 export async function POST(request: NextRequest) {
     const { gameId, guess } = await request.json()
     const game = games.get(gameId)
@@ -78,6 +100,9 @@ export async function POST(request: NextRequest) {
     })
 }
 
+/**
+ * Helper functions
+ */
 function processGuess(answer: string, guess: string): string[] {
     const result: string[] = [];
     const answerChars = answer.split('');

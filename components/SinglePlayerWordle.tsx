@@ -36,7 +36,9 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
     Record<string, GuessState[number]>
   >({});
 
-  /**** Game Initialization *****/
+  /**
+   * Game Initialization
+   */
   const startNewGame = useCallback(async () => {
     try {
       const response = await fetch(
@@ -76,7 +78,9 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
     startNewGame();
   }, [startNewGame]);
 
-  /**** Key State Management *****/
+  /**
+   * Key State Management
+   */
   const updateKeyStates = (currentGuess: string, result: GuessState) => {
     const newKeyStates = { ...keyStates };
     currentGuess.split("").forEach((letter, index) => {
@@ -93,7 +97,9 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
     setKeyStates(newKeyStates);
   };
 
-  /**** Guess Submission *****/
+  /**
+   * Guess Submission
+   */
   const handleGuessSubmission = async () => {
     //check if the guess contains 5 letters
     if (currentGuess.length !== WORD_LENGTH) {
@@ -153,6 +159,9 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
     }
   };
 
+  /**
+   * Validate Hard Mode Guess
+   */
   const isValidHardModeGuess = (guess: string): boolean => {
     if (!isHardMode || guesses.length === 0) {
       return true;
@@ -191,7 +200,9 @@ const SinglePlayerWordle: React.FC<SinglePlayerWordleProps> = ({
     return true;
   };
 
-  /**** (Keyboard) Input Handling *****/
+  /**
+   * (Keyboard) Input Handling
+   */
   const onKeyPress = useCallback(
     async (key: string) => {
       if (gameOver || !gameId) return;

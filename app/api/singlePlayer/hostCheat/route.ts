@@ -25,9 +25,11 @@ type GameState = {
 const games: Map<string, GameState> = new Map()
 
 /**
- * GET /api/cheat_mode
+ * GET /api/singlePlayer/hostCheat
  * Returns the game id of the newly created game.
  * 
+ * @param {number} optional maxGuesses - The maximum number of guesses allowed.
+ * @param {boolean} optional isHardMode - Indicates if the game is in hard mode.
  * @returns {gameId: string} 
  */
 export async function GET(request: NextRequest) {
@@ -65,7 +67,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/cheat_mode
+ * POST /api/singlePlayer/hostCheat
  * Updates the games data map and returns the result of the guess.
  * If game over or won, it includes the correct answer.
  * 
@@ -107,15 +109,17 @@ export async function POST(request: NextRequest) {
     const tiedCandidates = getTiedCandidates(game.candidates);
 
     if (tiedCandidates.length > 0) {
-        // play like normal wordle, use the first candidate's answer as final
+        // play like normal wordle, sort candidates and put tiedCandidates on top
+        // use the first candidate's answer as final
         // no more score update
+        sortCandidates(game.candidates, tiedCandidates);
         result = processGuess(game, guess);
         game.normalWordle = true;
     } else if (game.candidates.length > 1) {
 
-        const scores = game.candidates.map(candidate => candidate.score);
-        const hits = game.candidates.map(candidate => candidate.hit);
-        const presents = game.candidates.map(candidate => candidate.present);
+        const scores = game.candidates.map(c => c.score);
+        const hits = game.candidates.map(c => c.hit);
+        const presents = game.candidates.map(c => c.present);
 
         if (scores.some(s => s > 0) || hits.some(h => h > 0) || presents.some(p => p > 0)) {
             // If any candidate has hit or present > 0, mark as all "miss"
@@ -182,14 +186,14 @@ function processGuess(game: GameState, guess: string): string[] {
 
 function updateCandidates(game: GameState, guess: string) {
     // Update scores of candidates
-    game.candidates.forEach(candidate => {
-        if (candidate.needCheckTied && !candidate.needUpdate) {
-            candidate.needCheckTied = false;
+    game.candidates.forEach(c => {
+        if (c.needCheckTied && !c.needUpdate) {
+            c.needCheckTied = false;
         }
-        if (candidate.needUpdate) {
+        if (c.needUpdate) {
             const candidateResult = processGuess(
                 {
-                    candidates: [candidate],
+                    candidates: [c],
                     guesses: [],
                     maxGuesses: game.maxGuesses,
                     isHardMode: game.isHardMode,
@@ -203,62 +207,76 @@ function updateCandidates(game: GameState, guess: string) {
             const hitCount = candidateResult.filter(r => r === 'hit').length;
             const presentCount = candidateResult.filter(r => r === 'present').length;
 
-            candidate.hit = hitCount;
-            candidate.present = presentCount;
-            candidate.score = hitCount + presentCount;
+            c.hit = hitCount;
+            c.present = presentCount;
+            c.score = hitCount + presentCount;
 
             // if needUpdate is false, meaning the candidate is 'eliminated' in the next round
-            if (candidate.score > 0) {
-                candidate.needUpdate = false;
-                candidate.needCheckTied = true;
+            if (c.score > 0) {
+                c.needUpdate = false;
+                c.needCheckTied = true;
             }
         }
     });
 
     // Sort candidates by score(lowest to highest)
-    // If scores are tied, sort by hit count(highest to lowest)
-    // Sort for when situtaiton becomes normal wordle game and to check tied candidates
+    // Sort for when only one zero score candidate and becomes normal wordle game
     game.candidates.sort((a, b) => {
-        if (a.score !== b.score) {
-            return a.score - b.score;
-        }
-        return b.hit - a.hit;
+        return a.score - b.score;
     })
 }
 
 function getTiedCandidates(candidates: AnswerCandidate[]): AnswerCandidate[] {
-    const tiedCandidates = candidates.filter(candidate => candidate.needCheckTied);
+    const checkTiedCandidates = candidates.filter(c => c.needCheckTied);
+    const zeroScoreCandidates = candidates.filter(c => c.score === 0);
 
-    if (tiedCandidates.length === 0) {
+    if (checkTiedCandidates.length === 0 || zeroScoreCandidates.length > 0) {
         return [];
     }
 
     // if only one candidate, return it to process like normal wordle
-    if (tiedCandidates.length === 1) {
-        return [tiedCandidates[0]];
+    if (checkTiedCandidates.length === 1) {
+        return [checkTiedCandidates[0]];
     }
 
-    // If there are exactly two candidates and both have scores > 0, compare directly
-    if (tiedCandidates.length === 2 && (tiedCandidates[0].score > 0 || tiedCandidates[1].score > 0)) {
-        const [first, second] = tiedCandidates;
-        if (first.score < second.score) {
-            return [first];
-        } else if (second.score < first.score) {
-            return [second];
-        } else {
-            return first.hit < second.hit ? [first] : [second];
+    let tiedCandidates: AnswerCandidate[] = [];
+    let minHit = Infinity;
+    let minPresent = Infinity;
+
+    // compare and find if there are tied candidates
+    // first compare hit, then present
+    // if tied, push all to tiedCandidates
+    for (const c of checkTiedCandidates) {
+        if (c.hit < minHit) {
+            minHit = c.hit;
+            minPresent = c.present;
+            tiedCandidates = [c];
+        } else if (c.hit === minHit) {
+            if (c.present < minPresent) {
+                minPresent = c.present;
+                tiedCandidates = [c];
+            } else if (c.present === minPresent) {
+                tiedCandidates.push(c);
+            }
         }
     }
+    return tiedCandidates;
+}
 
-    // Check for tie candidates for more than 2 candidates
-    // Find the minimun hit and present values for canditates with score > 0
-    const minHit = Math.min(...tiedCandidates.filter(candidate => candidate.score > 0).map(candidate => candidate.hit));
-    const minPresent = Math.min(...tiedCandidates.filter(candidate => candidate.score > 0).map(candidate => candidate.present));
+function sortCandidates(candidates: AnswerCandidate[], tiedCandidates: AnswerCandidate[]): void {
+    const tiedSet = new Set(tiedCandidates);
 
-    return tiedCandidates.filter(candidate =>
-        candidate.hit === minHit &&
-        candidate.present === minPresent
-    );
+    candidates.sort((a, b) => {
+        const isATied = tiedSet.has(a);
+        const isBTied = tiedSet.has(b);
+
+        if (isATied && !isBTied) {
+            return -1;
+        } else if (!isATied && isBTied) {
+            return 1;
+        }
+        return 0;
+    })
 }
 
 function isValidHardModeGuess(guess: string, lastGuess: string, lastGuessState: string[]): boolean {

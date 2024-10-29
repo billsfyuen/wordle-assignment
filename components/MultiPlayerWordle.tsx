@@ -41,7 +41,9 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
     Record<string, GuessState[number]>
   >({});
 
-  /**** Game Initialization *****/
+  /**
+   * Game Initialization
+   */
   const startNewGame = useCallback(async () => {
     try {
       const response = await fetch(
@@ -84,7 +86,9 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
     startNewGame();
   }, [startNewGame]);
 
-  /**** Key State Management *****/
+  /**
+   * Key State Management
+   */
   const updateKeyStates = (currentGuess: string, result: GuessState) => {
     const newKeyStates = { ...keyStates };
     currentGuess.split("").forEach((letter, index) => {
@@ -101,7 +105,9 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
     setKeyStates(newKeyStates);
   };
 
-  /**** Guess Submission *****/
+  /**
+   * Guess Submission
+   */
   const handleGuessSubmission = async () => {
     if (currentGuess.length !== WORD_LENGTH) {
       toast({
@@ -184,6 +190,9 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
     }
   };
 
+  /**
+   * Validate Hard Mode Guess
+   */
   const isValidHardModeGuess = (guess: string): boolean => {
     if (!isHardMode) {
       return true;
@@ -230,7 +239,9 @@ const MultiPlayerWordle: React.FC<MultiPlayerWordleProps> = ({
     return true;
   };
 
-  /**** (Keyboard) Input Handling *****/
+  /**
+   * (Keyboard) Input Handling
+   */
   const onKeyPress = useCallback(
     async (key: string) => {
       if (gameOver || !gameId) return;
