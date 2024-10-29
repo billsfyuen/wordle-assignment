@@ -23,7 +23,8 @@ interface ConfigPopupProps {
     maxGuesses: number,
     gameVersion: string,
     isMultiplayer: boolean,
-    isHardMode: boolean
+    isHardMode: boolean,
+    isInfiniteMode: boolean
   ) => void;
 }
 
@@ -32,10 +33,11 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
   const [gameVersion, setGameVersion] = React.useState("normal");
   const [isMultiplayer, setIsMultiplayer] = React.useState(false);
   const [isHardMode, setIsHardMode] = React.useState(false);
+  const [isInfiniteMode, setIsInfiniteMode] = React.useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onClose(maxGuesses, gameVersion, isMultiplayer, isHardMode);
+    onClose(maxGuesses, gameVersion, isMultiplayer, isHardMode, isInfiniteMode);
   };
 
   return (
@@ -54,6 +56,7 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
               onChange={(e) => setMaxGuesses(Number(e.target.value))}
               min={3}
               max={10}
+              disabled={isInfiniteMode}
             />
           </div>
           <div>
@@ -64,9 +67,10 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
                 setGameVersion(value);
                 if (value === "hostCheat") {
                   setIsMultiplayer(false);
+                  setIsInfiniteMode(false);
                 }
               }}
-              disabled={isMultiplayer}
+              disabled={isMultiplayer || isInfiniteMode}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a game mode" />
@@ -88,8 +92,10 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
                 setIsMultiplayer(value === "true");
                 if (value === "true") {
                   setGameVersion("normal");
+                  setIsInfiniteMode(false);
                 }
               }}
+              disabled={isInfiniteMode}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select multiplayer option" />
@@ -110,6 +116,24 @@ const ConfigPopup: React.FC<ConfigPopupProps> = ({ isOpen, onClose }) => {
           </div>
           <p className="text-sm text-muted-foreground">
             In Hard Mode, any revealed hints must be used in subsequent guesses.
+          </p>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="infinite-mode"
+              checked={isInfiniteMode}
+              onCheckedChange={(checked) => {
+                setIsInfiniteMode(checked);
+                if (checked) {
+                  setIsMultiplayer(false);
+                  setGameVersion("normal");
+                }
+              }}
+            />
+            <Label htmlFor="infinite-mode">Infinite Mode</Label>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            In Infinite Mode, the game continues indefinitely, and you earn
+            points for correct guesses.
           </p>
           <Button type="submit">Start Game</Button>
         </form>

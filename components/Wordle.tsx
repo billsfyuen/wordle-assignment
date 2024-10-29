@@ -5,6 +5,7 @@ import ConfigPopup from "./ConfigPopup";
 import MultiplayerConfigPopup from "./MultiplayerConfigPopup";
 import MultiPlayerWordle from "./MultiPlayerWordle";
 import SinglePlayerWordle from "./SinglePlayerWordle";
+import InfiniteWordle from "./InfiniteWordle";
 
 const Wordle: React.FC = () => {
   const [isConfigOpen, setIsConfigOpen] = useState(true);
@@ -13,17 +14,20 @@ const Wordle: React.FC = () => {
   const [gameVersion, setGameVersion] = useState("normal");
   const [isMultiplayer, setIsMultiplayer] = useState(false);
   const [isHardMode, setIsHardMode] = useState(false);
+  const [isInfiniteMode, setIsInfiniteMode] = useState(false);
 
   const handleConfigClose = (
     newMaxGuesses: number,
     newGameVersion: string,
     newIsMultiplayer: boolean,
-    newIsHardMode: boolean
+    newIsHardMode: boolean,
+    newIsInfiniteMode: boolean
   ) => {
     setMaxGuesses(newMaxGuesses);
     setGameVersion(newGameVersion);
     setIsMultiplayer(newIsMultiplayer);
     setIsHardMode(newIsHardMode);
+    setIsInfiniteMode(newIsInfiniteMode);
     setIsConfigOpen(false);
 
     if (newIsMultiplayer) {
@@ -46,22 +50,26 @@ const Wordle: React.FC = () => {
         isOpen={isMultiplayerConfigOpen}
         onClose={handleMultiplayerConfigClose}
       />
-      {!isConfigOpen &&
-        !isMultiplayerConfigOpen &&
-        (isMultiplayer ? (
-          <MultiPlayerWordle
-            maxGuesses={maxGuesses}
-            isHardMode={isHardMode}
-            onGameEnd={handleGameEnd}
-          />
-        ) : (
-          <SinglePlayerWordle
-            maxGuesses={maxGuesses}
-            gameVersion={gameVersion}
-            isHardMode={isHardMode}
-            onGameEnd={handleGameEnd}
-          />
-        ))}
+      {!isConfigOpen && !isMultiplayerConfigOpen && (
+        <>
+          {isMultiplayer ? (
+            <MultiPlayerWordle
+              maxGuesses={maxGuesses}
+              isHardMode={isHardMode}
+              onGameEnd={handleGameEnd}
+            />
+          ) : isInfiniteMode ? (
+            <InfiniteWordle onGameEnd={handleGameEnd} isHardMode={isHardMode} />
+          ) : (
+            <SinglePlayerWordle
+              maxGuesses={maxGuesses}
+              gameVersion={gameVersion}
+              isHardMode={isHardMode}
+              onGameEnd={handleGameEnd}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 };
